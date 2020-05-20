@@ -1,0 +1,145 @@
+```{r}
+# CHAPTER 4 LOGISTIC REGRESSION, LDA, QDA AND KNN
+
+# DATASET BEING USED HERE IS THE STOCK MARKET DATA # 
+
+# LET US START WITH SOME EDA OF THE DATASET #
+
+library(ISLR)
+head(Smarket)
+```
+```{r}
+# we see that there are 9 columns indicating lagged returns, volumes, todays returns and finally whether return has increase or decreased
+
+print(dim(Smarket))
+summary(Smarket)
+```
+```{r}
+# we see that that return columns have more or less of similiar properties like min, median, mean etc. volume has all positive values (which makes sense). Also we observe that categorical variable 'Direction' is more or less balanced
+
+# lets now have a look at the returns
+
+plot(Smarket$Today)
+```
+```{r}
+
+# we observe that returns shoq quite a random character and does not seem to be homoscedastic
+
+# lets now check correlation among these columns except 'Direction' which is a categorical variable 
+
+cor(Smarket[,-9])
+```
+```{r}
+# We observe very little correlation among the lagged values of returns however there is significant positive correlation of today's returns with the volume which is again a sensible observation
+
+attach(Smarket)
+plot(Volume,type='l')
+```
+```{r}
+# LOGISTIC REGRESSION #
+
+# Initially we will use all the remaining variables to predict Direction using glm method #
+
+glm.fit = glm(Direction ~.-(Year+Today), data = Smarket, family=binomial)
+
+summary(glm.fit)
+
+```
+```{r}
+# We observe that least p value is associated with lag1 meaning that if market had a positive return yesterday, it will go down today. but we do not have enough evidence for this. We observe that p-value for all the coefficients are higher than .05 so there is not enough evidence that any of them contribute significantly towards prediction fo direction.#
+
+coef(glm.fit)                # coefficients
+summary(glm.fit)$coef[,4]    # p-values
+```
+```{r}
+# Let's see how dummy variables are constructed for direction
+contrasts(Direction) 
+
+# now lets make prediction on train data using predict function
+
+glm.probs=predict(glm.fit,type='response')
+
+glm.probs[1:10]
+```
+```{r}
+# lets now convert prediction to 'up' or 'down'
+
+glm.pred=rep("Up",1250)
+glm.pred[glm.probs<=.5]="Down"
+
+# lets now see the confusion matrix
+
+table(glm.pred,Direction)
+```
+```{r}
+# we see that logistic regression is performing just a little better than random guessing on training data which is not a good performance#
+
+# lets divide the data in train and validation sets and observe how model performs
+
+# we are choosing data prior 2005 as train 
+
+train = (Year<2005)
+Smarket.2005=Smarket[!train,]
+Direction.2005 = Direction[!train]
+dim(Smarket.2005)
+
+```
+```{r}
+# now we will fit a model using train data and use validation set for checking performance
+
+glm.fit2 = glm(Direction ~.-(Year+Today), data = Smarket, family=binomial,subset=train)
+
+# predicting probabilities 
+
+glm.probs2=predict(glm.fit2,Smarket.2005,"response")
+
+# converting probabilities to classes 'Up' and 'Down'
+
+glm.pred2=rep("Up",252)
+glm.pred2[glm.probs2<=.5]="Down"
+
+# confusion matrix 
+
+print(table(glm.pred2,Direction.2005))
+
+# accuracy
+
+print(mean(glm.pred2==Direction.2005))
+
+# error rate
+
+print(mean(glm.pred2!=Direction.2005))
+
+```
+```{r}
+# now we will fit a model using train data and use validation set for checking performance
+
+glm.fit3 = glm(Direction ~ Lag1+Lag2, data = Smarket, family=binomial,subset=train)
+
+# predicting probabilities 
+
+glm.probs3=predict(glm.fit3,Smarket.2005,"response")
+
+# converting probabilities to classes 'Up' and 'Down'
+
+glm.pred3=rep("Up",252)
+glm.pred3[glm.probs3<=.5]="Down"
+
+# confusion matrix    
+
+print(table(glm.pred3,Direction.2005))
+
+# accuracy
+
+print(mean(glm.pred3==Direction.2005))
+
+# error rate
+
+print(mean(glm.pred3!=Direction.2005))
+```
+```{r}
+# LINEAR DISCRIMINANT ANALYSIS #
+
+
+```
+
